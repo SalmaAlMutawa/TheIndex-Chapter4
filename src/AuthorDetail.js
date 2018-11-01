@@ -7,7 +7,7 @@ class AuthorDetail extends Component {
     console.log(author);
 
     let books = author.books.map(book => (
-      <BookRow book={book} key={book.title} author={author} />
+      <BookRow book={book} key={book.title} />
     ));
 
     return (

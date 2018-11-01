@@ -1,20 +1,21 @@
 import React, { Component } from "react";
 import axios from "axios";
 
-import authors from "./data.js";
-
 // Components
 import Sidebar from "./Sidebar";
 import SearchBar from "./SearchBar";
 import AuthorsList from "./AuthorsList";
 import AuthorDetail from "./AuthorDetail";
+import Loading from "./Loading";
 
 class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
       currentAuthor: {},
-      filteredAuthors: []
+      filteredAuthors: [],
+      authors: [],
+      loading: true
     };
     this.selectAuthor = this.selectAuthor.bind(this);
     this.unselectAuthor = this.unselectAuthor.bind(this);
@@ -22,7 +23,14 @@ class App extends Component {
   }
 
   selectAuthor(author) {
-    this.setState({ currentAuthor: author });
+    this.setState({ loading: true });
+    axios
+      .get(`https://the-index-api.herokuapp.com/api/authors/${author.id}/`)
+      .then(res => res.data)
+      .then(authorFromAPI =>
+        this.setState({ currentAuthor: authorFromAPI, loading: false })
+      )
+      .catch(err => console.log(err));
   }
 
   unselectAuthor() {
@@ -31,7 +39,7 @@ class App extends Component {
 
   filterAuthors(query) {
     query = query.toLowerCase();
-    let filteredAuthors = authors.filter(author => {
+    let filteredAuthors = this.state.authors.filter(author => {
       return `${author.first_name} ${author.last_name}`.includes(query);
     });
     this.setState({ filteredAuthors: filteredAuthors });
@@ -47,9 +55,26 @@ class App extends Component {
           selectAuthor={this.selectAuthor}
         />
       );
+    } else if (this.state.loading === true) {
+      return <Loading />;
     } else {
-      return <AuthorsList authors={authors} selectAuthor={this.selectAuthor} />;
+      return (
+        <AuthorsList
+          authors={this.state.authors}
+          selectAuthor={this.selectAuthor}
+        />
+      );
     }
+  }
+
+  componentDidMount() {
+    axios
+      .get("https://the-index-api.herokuapp.com/api/authors")
+      .then(res => res.data)
+      .then(authorsFromAPI =>
+        this.setState({ authors: authorsFromAPI, loading: false })
+      )
+      .catch(err => console.log(err));
   }
 
   render() {
